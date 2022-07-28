@@ -21,10 +21,12 @@ class ToolService extends Service {
     let chunks = await fse.readdir(chunkdDir)
     chunks.sort((a, b) => a.split('-')[1] - b.split('-')[1])
     chunks = chunks.map(cp => path.resolve(chunkdDir, cp))
+    console.log('chunks',chunks)
     await this.mergeChunks(chunks, filepPath, size)
 
   }
   async mergeChunks(files, dest, size) {
+    console.log('dest',dest)
     const pipStream = (filePath, writeStream) => new Promise(resolve => {
       const readStream = fse.createReadStream(filePath)
       readStream.on('end', () => {
@@ -35,13 +37,22 @@ class ToolService extends Service {
     })
 
     await Promise.all(
+
       files.forEach((file, index) => {
+        // console.log('file',file)
+        // console.log('index',index)
+        console.log('start',index * size)
+        console.log('end',(index + 1) * size)
+        
         pipStream(file, fse.createWriteStream(dest, {
           start: index * size,
           end: (index + 1) * size,
         }))
       })
-    )
+
+    );
+    //合并后删除保存切片的目录
+    fse.rmdirSync(chunkDir);  
   }
   async sendMail(email, subject, text, html) {
     console.log(email, subject, html)

@@ -69,7 +69,13 @@
 
 <script>
 import sparkMD5 from 'spark-md5'
-const CHUNK_SIZE = 10*1024*1024
+// const CHUNK_SIZE = 10*1024*1024  //10M
+const CHUNK_SIZE = 0.1*1024*1024  //100kb
+// const CHUNK_SIZE = 1*1024*1024  //1M 
+// 注意 后端 fse.createWriteStream(dest, {
+//           start: index * size, //start 必须是整数
+//           end: (index + 1) * size,
+//         }
 export default {
   async mounted(){
     const ret = await this.$http.get('/user/info')
@@ -192,6 +198,7 @@ export default {
         const spark = new sparkMD5.ArrayBuffer()
         let count = 0 
 
+        // 追加
         const appendToSpark = async file=>{
           return new Promise(resolve=>{
             const reader = new FileReader()
@@ -237,7 +244,7 @@ export default {
         const file = this.file
         const size = file.size
         const offset = 2*1024*1024
-        // 第一个2M，最后一个区块数据全要
+        // 第一个2M，最后一个区块数据全要 
         let chunks = [file.slice(0,offset)]
 
         let cur = offset
@@ -280,12 +287,14 @@ export default {
       //   console.log('格式正确')
       // }
       const chunks = this.createFileChunk(this.file)
+      // this.chunks = chunks
       // const hash = await this.calculateHashWorker()
       // const hash1 = await this.calculateHashIdle()
       // console.log('文件hash',hash)
       // console.log('文件hash1',hash1)
       const hash = await this.calculateHashSample()
       this.hash = hash
+      // console.log('hash',hash);
 
       // 问一下后端，文件是否上传过，如果没有，是否有存在的切片
       const {data:{uploaded, uploadedList}} = await this.$http.post('/checkfile',{
@@ -296,6 +305,12 @@ export default {
         // 秒传
         return this.$message.success('秒传成功')
       }
+
+    // if(this.file.size < CHUNK_SIZE){
+    //     // 直接上传文件 不用切片
+    //     return this.$message.success('不用切片')
+    //   }
+
       // console.log('文件hash2',hash2)
       // 两个hash配合
       // 抽样hash 不算全量
@@ -311,10 +326,12 @@ export default {
           chunk:chunk.file,
           // 设置进度条，已经上传的，设为100
           progress:uploadedList.indexOf(name)>-1 ?100:0
+          // progress:0
         }
       })
-      await this.uploadChunks(uploadedList)
 
+      await this.uploadChunks(uploadedList)
+      // await this.uploadChunks()
     },
     async uploadChunks(uploadedList=[]){
       const requests = this.chunks
@@ -328,19 +345,22 @@ export default {
           // form.append('index',chunk.index)
           return {form, index:chunk.index,error:0}
         })
-        .map(({form,index})=> this.$http.post('/uploadfile',form,{
-          onUploadProgress:progress=>{
-            // 不是整体的进度条了，而是每个区块有自己的进度条，整体的进度条需要计算
-            this.chunks[index].progress = Number(((progress.loaded/progress.total)*100).toFixed(2))
-          }
-        }))
+        // .map(({form,index})=> this.$http.post('/uploadfile',form,{
+        //   onUploadProgress:progress=>{
+        //     console.log(index,progress);
+            
+        //     // 不是整体的进度条了，而是每个区块有自己的进度条，整体的进度条需要计算
+        //     this.chunks[index].progress = Number(((progress.loaded/progress.total)*100).toFixed(2))
+        //   }
+        // }))
       // @todo 并发量控制 
       // 尝试申请tcp链接过多，也会造成卡顿
       // 异步的并阿叔控制，
       // await Promise.all(requests)
-
-      // await this.sendRequest(requests)
-      await Promise.all(requests)
+      console.log('requests',requests);
+      
+      await this.sendRequest(requests)
+      // await Promise.all(requests)
       await this.mergeRequest()
       // const form = new FormData()
       // form.append('name','file')
@@ -358,7 +378,7 @@ export default {
     // 上传可能报错
     // 报错之后，进度条变红，开始重试
     // 一个切片重试失败三次，整体全部终止
-    async sendRequest(chunks,limit=4){
+    async sendRequest(chunks,limit=3){
       // limit仕并发数
       // 一个数组,长度仕limit
       // [task12,task13,task4]

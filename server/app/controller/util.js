@@ -56,7 +56,7 @@ class UtilController extends BaseController {
     //   return this.ctx.status = 500
     // }
     const { ctx } = this
-    console.log(ctx.request)
+    // console.log(ctx.request)
     const file = ctx.request.files[0]
     const { hash, name } = ctx.request.body
 
