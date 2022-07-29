@@ -70,7 +70,8 @@
 <script>
 import sparkMD5 from 'spark-md5'
 // const CHUNK_SIZE = 10*1024*1024  //10M
-const CHUNK_SIZE = 0.1*1024*1024  //100kb
+// const CHUNK_SIZE = 0.1*1024*1024  //100kb
+const CHUNK_SIZE = 0.1*1000*1024
 // const CHUNK_SIZE = 1*1024*1024  //1M 
 // 注意 后端 fse.createWriteStream(dest, {
 //           start: index * size, //start 必须是整数

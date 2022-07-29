@@ -18,15 +18,18 @@ const transporter = nodemailer.createTransport({
 class ToolService extends Service {
   async mergeFile(filepPath, filehash, size) {
     const chunkdDir = path.resolve(this.config.UPLOAD_DIR, filehash) // 切片的文件夹
+    
     let chunks = await fse.readdir(chunkdDir)
     chunks.sort((a, b) => a.split('-')[1] - b.split('-')[1])
     chunks = chunks.map(cp => path.resolve(chunkdDir, cp))
-    console.log('chunks',chunks)
-    await this.mergeChunks(chunks, filepPath, size)
+    // console.log('chunks',chunks)
+    await this.mergeChunks(chunks, filepPath, size,chunkdDir)
 
   }
-  async mergeChunks(files, dest, size) {
+  async mergeChunks(files, dest, size,chunkdDir) {
+    
     console.log('dest',dest)
+
     const pipStream = (filePath, writeStream) => new Promise(resolve => {
       const readStream = fse.createReadStream(filePath)
       readStream.on('end', () => {
@@ -36,23 +39,18 @@ class ToolService extends Service {
       readStream.pipe(writeStream)
     })
 
-    await Promise.all(
-
-      files.forEach((file, index) => {
-        // console.log('file',file)
-        // console.log('index',index)
-        console.log('start',index * size)
-        console.log('end',(index + 1) * size)
-        
+    await Promise.all(files.map((file, index) => {
+        console.log('filedir',file)
+        console.log('index',index)
         pipStream(file, fse.createWriteStream(dest, {
           start: index * size,
           end: (index + 1) * size,
         }))
-      })
-
-    );
+      }));
     //合并后删除保存切片的目录
-    fse.rmdirSync(chunkDir);  
+    console.log('chunkdDir',chunkdDir);
+    
+    // fse.rmdirSync(chunkdDir);
   }
   async sendMail(email, subject, text, html) {
     console.log(email, subject, html)
