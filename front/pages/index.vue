@@ -45,10 +45,23 @@ export default {
     }
   },
   async mounted(){
-    let ret = await this.$http.get('/article')
-    if(ret.code==0){
-      this.articles = ret.data
-    }
+    // let ret = await this.$http.get('/article')
+    // if(ret.code==0){
+    //   this.articles = ret.data
+    // }
+
+    this.articles = [
+      {
+        title: "title",
+        _id:"1235",
+        views:'views',
+        like:'like',
+        author:{
+          avatar:'avatar',
+          nickname:'昵称'
+        }
+      }
+    ]
 
   }
 }

@@ -10,11 +10,11 @@ module.exports = app => {
     passwd: { type: String, required: true, select: false },
     nickname: { type: String, required: true },
     avatar: { type: String, required: false, default: '/user.png' },
-    following: {
+    following: {//关注了谁
       type: [{ type: Schema.Types.ObjectId, ref: 'User' }],
       default: [],
     },
-    likeArticle: {
+    likeArticle: {//点赞了哪些文章
       type: [{ type: Schema.Types.ObjectId, ref: 'Article' }],
       default: [],
 

@@ -100,6 +100,7 @@ class UserController extends BaseController {
     )
     this.success()
   }
+  // 是否关注当前用户
   async isfollow() {
     const { ctx } = this
     const me = await ctx.model.User.findById(ctx.state.userid)
@@ -107,6 +108,7 @@ class UserController extends BaseController {
     const isFollow = !!me.following.find(id => id.toString() === ctx.params.id)
     this.success({ isFollow })
   }
+  // 具体关注的操作
   async follow() {
     const { ctx } = this
 
@@ -118,6 +120,7 @@ class UserController extends BaseController {
       this.message('关注成功')
     }
   }
+  // 取消关注
   async cancelFollow() {
     const { ctx } = this
     const me = await ctx.model.User.findById(ctx.state.userid)
@@ -135,13 +138,16 @@ class UserController extends BaseController {
     //   this.message('关注成功')
     // }
   }
+  // 关注的人
   async following() {
     const { ctx } = this
     const users = await ctx.model.User.findById(ctx.params.id).populate('following')
     this.success(users.following)
   }
+  // 粉丝 - 关注你的人
   async followers() {
     const { ctx } = this
+    // 通过 following ：id 过滤
     const users = await ctx.model.User.find({ following: ctx.params.id })
     this.success(users)
   }
